@@ -1,5 +1,5 @@
 #The script to automate the data processing for Network Modelling
-#Written by - Kazi Toufiq Wadud Email: kazi.wadud@metrotrains.com.au
+#Written by - Kazi Toufiq Wadud 
 
 
 
