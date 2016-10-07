@@ -1,4 +1,4 @@
-setwd("C:/Users/kazi.wadud/Documents/R Script")
+setwd("C:/Users/Documents/R Script")
 incident_data <- read.csv("INCIDENT_AUG_SEPT.csv")
 station_ref <- read.csv("STATION_CODE_MASTER.csv")
 
