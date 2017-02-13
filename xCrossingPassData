@@ -147,8 +147,9 @@ for (f in 1:nrow(KMRange)) {
     r1 <-  seq(PassDataByRd$Start.Kilometrage[i], PassDataByRd$End.Kilometrage[i], by=0.001)
     PassDataByRd$Tag[i]  <- ifelse(sum(r1 %in% ref)>0, "Yes", "No")
     
-    PassDataByRd$Ref_Start.Kilometrage <-  KMRange[f,2]
-    PassDataByRd$Ref_End.Kilometrage  <- KMRange[f,3]
+    PassDataByRd$PercentageCovered[i] <- percent(sum(r1 %in% ref)/length(ref))
+    PassDataByRd$Ref_Start.Kilometrage[i] <-  KMRange[f,2]
+    PassDataByRd$Ref_End.Kilometrage[i]  <- KMRange[f,3]
     
     }
   
