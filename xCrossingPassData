@@ -1,0 +1,234 @@
+setwd("C:/Users/TOUFIQ/Desktop/PASSDATA")
+library(readxl)
+library(xlsx)
+library(data.table)
+library(stringr)
+library(RODBC)
+
+
+FileList <- list.files(path=".", pattern="Rd.xlsx", full.names = F, recursive = F)
+ClassList <- read_excel("Class List.xlsx", sheet=1, col_names = T)
+
+print(FileList)
+
+
+funcPlantNo <- function (df) {
+  
+  if (sum(colnames(df) %in% c("Plant No"))==0) {
+    
+    df$`Plant No` <- df$NAME
+    return (df)
+  }
+  else {
+    return (df)
+  }
+}
+
+funcKilometrage <- function (df) {
+  
+  if (sum(colnames(df) %in% c("Kilometrage"))>0) {
+    
+    df$`End Kilometrage` <- df$Kilometrage
+    df$`Start Kilometrage` <- df$Kilometrage
+    df$Kilometrage <- NULL
+    return (df)
+  }
+  else {
+    return (df)
+  }
+}
+
+
+funcDistance <- function (df) {
+  
+  if (sum(colnames(df) %in% c("Distance"))==1) {
+    
+    df$`End Kilometrage` <- df$Distance
+    df$`Start Kilometrage` <- df$Distance
+    df$Distance <- NULL
+    return (df)
+  }
+  else {
+    return (df)
+  }
+}
+
+
+myls1 <- vector("list", length(FileList))
+
+for (c in 1:length(FileList)) {
+  
+  SheetList <- excel_sheets(FileList[c])
+  FoundClass <- SheetList[SheetList %in% ClassList[,2]]
+  myls1[c] <- length(FoundClass)
+  
+}
+
+
+myls <- vector("list", sum(unlist(myls1)))
+l=1
+
+for (f in 1:length(FileList)) {
+  
+  SheetList <- excel_sheets(FileList[f])
+  FoundClass <- SheetList[SheetList %in% ClassList[,2]]
+  
+  for (s in 1:length(FoundClass)) {
+    tab <- as.data.frame(read_excel(FileList[f], sheet =FoundClass[s]))
+    
+    c_name1<-   ifelse (colnames(tab) %in% c("Plant Number", "MTM Plant No") , "Plant No", colnames(tab))
+    colnames(tab) <- c_name1
+    
+    c_name2<-   ifelse(colnames(tab) %in% c("Kilometrage Up") , "Start Kilometrage", colnames(tab))
+    colnames(tab) <- c_name2
+    
+    c_name3<-   ifelse(colnames(tab) %in% c("Kilometrage Down") , "End Kilometrage", colnames(tab))
+    colnames(tab) <- c_name3
+    
+    
+    tab <- funcPlantNo(tab)
+    tab <- funcKilometrage(tab)
+    tab <- funcDistance(tab)
+    
+    tab <- tab[, c("NAME", "Plant No", "Start Kilometrage", "End Kilometrage")]
+    tab$FileName <-FileList[f]
+    tab$SheetName <-FoundClass[s]
+    #tab <- apply(tab, c(1,2), function(x) gsub(",", "***", x ))
+    
+    myls[[l]] <- tab
+    l=l+1
+    #write.table(tab, file="MergedData.csv", appen=T, sep=",", col.names=TRUE , row.names = F)
+    
+  }
+}
+
+
+
+PassData <- do.call(rbind, lapply(myls, data.frame, stringsAsFactors=FALSE))
+PassData$End.Kilometrage <-  as.numeric(PassData$End.Kilometrage)
+PassData$Start.Kilometrage <-  as.numeric(PassData$Start.Kilometrage)
+
+
+View(PassData[is.na(PassData$Plant.No),])
+
+
+PassData$Plant.No <-  ifelse(is.na(PassData$Plant.No), PassData$NAME, PassData$Plant.No)
+
+View(PassData)
+
+
+
+KMRange <- as.data.frame(read_excel("Kilometrage.xlsx", sheet=1, col_names = T))
+#
+# myls2 <- vector("list", nrow(KMRange))
+#
+# for (i in 1:nrow(KMRange)) {
+#  
+#   myls2[[i]] <- PassData[PassData$Start.Kilometrage>= KMRange[i,2]  &  PassData$FileName==KMRange[i,1]
+#                        & PassData$End.Kilometrage<= KMRange[i,3], ]
+# 
+#  
+#   }
+#
+#  
+
+
+library(dplyr)
+
+lst1 <- vector("list", nrow(KMRange))
+
+for (f in 1:nrow(KMRange)) {
+  
+  PassDataByRd <- filter(PassData, FileName==KMRange[f,1])
+  
+  for (i in 1:nrow(PassDataByRd)) {
+    
+    ref <-  seq(KMRange[f,2], KMRange[f,3], by=0.001)
+    r1 <-  seq(PassDataByRd$Start.Kilometrage[i], PassDataByRd$End.Kilometrage[i], by=0.001)
+    PassDataByRd$Tag[i]  <- ifelse(sum(r1 %in% ref)>0, "Yes", "No")
+    
+    PassDataByRd$Ref_Start.Kilometrage <-  KMRange[f,2]
+    PassDataByRd$Ref_End.Kilometrage  <- KMRange[f,3]
+    
+    }
+  
+   lst1[[f]] <-  PassDataByRd
+    
+}
+
+PassDataKMselection<- do.call(rbind, lapply(lst1, data.frame, stringsAsFactors=FALSE))
+
+
+View(PassDataKMselection)
+
+
+
+
+
+PassDataKMselection <- as.data.frame(rbindlist(myls2, fill=TRUE))
+
+View(PassDataKMselection)
+
+write.xlsx(PassDataKMselection, "Merged Pass Data.xlsx", sheetName = "PassData", row.names = F )
+
+
+
+# filter KM
+str(PassData)
+
+
+PassDataKMselection$Plant.No <- gsub(" {1,}", "", PassDataKMselection$Plant.No)
+
+
+
+dbhandle <- odbcDriverConnect('driver={SQL Server};
+                              server=MTBSQL28V-DEV\\MTBSQL28VDEV01;
+                              database=elllipse_AISD;trusted_connection=true')
+
+
+myls <- vector("list", length(PassDataKMselection$Plant.No))  # To collect the relevant records from Ellipse
+
+for (i in 1:length(PassDataKMselection$Plant.No)) {
+  EllipseData1 <- sqlQuery (dbhandle, paste0("select *  from (select len(plant_no) as len_plantno, REPLACE(plant_no, ' ', '') as eqp_no, * from dbo.MSF600 ) as f",
+                                             " where eqp_no=", "'", PassDataKMselection$Plant.No[i],"'"))
+  myls[[i]] <- as.data.frame(EllipseData1)
+  print(i)
+  
+}
+
+
+EllipseData <- as.data.frame(rbindlist(myls, fill=TRUE))
+
+str(EllipseData)
+
+View(EllipseData)
+
+EllipseData$eqp_no <- as.character(EllipseData$eqp_no)
+
+
+PassAndEllipse <- merge(x=PassDataKMselection, y=EllipseData, by.x=c('Plant.No'),  by.y=c('eqp_no'), all.x = TRUE)
+
+View(PassAndEllipse)
+
+
+write.xlsx(PassAndEllipse, "Pass And Ellipse Joined.xlsx", sheetName = "Pass And Ellipse", row.names = F )
+
+
+
+SignalFault  <- as.data.frame(read_excel("Signalling Fault Data 2011-2016.xlsx", sheet=1, col_names = T))
+
+View(SignalFault)
+
+str(SignalFault)
+
+SignalFault$`Equip No` <- gsub(" {1,}", "", SignalFault$`Equip No`)
+
+
+PassAndEllipseAndSignalFault <- merge(x=PassAndEllipse, y=SignalFault, by.x=c('Plant.No'), by.y=c('Equip No'), all.x = TRUE)
+
+
+View(PassAndEllipseAndSignalFault[!is.na(PassAndEllipseAndSignalFault$Date),])
+
+write.xlsx(PassAndEllipseAndSignalFault, "PassAndEllipseAndSignalFault.xlsx", sheetName ="PassAndEllipseAndSignalFault", row.names = F )
+
+
