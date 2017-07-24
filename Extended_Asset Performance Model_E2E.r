@@ -1,21 +1,3 @@
-setwd("J:/Asset Management/Asset Performance and Investment/12_Data Repository/APM_Extended/JUNE 2017")
-
-
-# FMP, SIGNALLING, INFRA data pre-processing ------------------------------
-
-## This Script prepares the data from -
-#           1) FMP (monthly data from Rolling Stock Performance Team)
-#           2) 1- Passenger Weighted Minutes - Actuals vs. Targets V2.xls  (From Ellipse)
-# http://mtaell03p:8080/OpenDocument/opendoc/openDocument.jsp?iDocID=3013728&sWindow=Same&lsMDate From (DD/MM/YYYY)=01/05/2017&lsMDate To (DD/MM/YYYY)=31/05/2017&sOutputFormat=H
-#
-#           3) 03- Signalling Failure Cause Analysis - Manager V2.xls (From Ellipse)
-# http://mtaell03p:8080/OpenDocument/opendoc/openDocument.jsp?iDocID=3013699&sWindow=Same&lsMDate From (DD/MM/YYYY)=01/05/2017&lsMDate To (DD/MM/YYYY)=31/05/2017&sOutputFormat=H
-# 
-# Script Written By -    Kazi Toufiq Wadud, 
-#                        Asset Performance Specialist, Strategic Asset Mgmt.
-#                        kazi.wadud@metrotrains.com.au
-#==========================================================================================
-
 
 
 library(xlsx)
