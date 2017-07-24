@@ -1,4 +1,4 @@
-#    1) This R Script will download data from MTM's PRS system based on Date Selection.         
+#    1) This R Script will download data from system based on Date Selection.         
 #    2) Authentication to PRS is via Windows user authentication. To run this  
 #       script user need to have access to PRS.
 #
@@ -12,12 +12,12 @@
 #    6) At the end this script connects to SQL Server Database and load/append the data model to a table       
 #
 # Script Written By -    Kazi Toufiq Wadud, 
-#                        Asset Performance Specialist, Strategic Asset Mgmt.
-#                        kazi.wadud@metrotrains.com.au
+#                    
+#                     
 #                        
 #=============================================================================================
 
-setwd("J:/Asset Management/Asset Performance and Investment/12_Data Repository")
+
 
 library(lubridate)
 ReportServer <- "http://prsreports.metrotrains.com.au/ReportServer?%2fPRS%2f" #PRS Report Server
