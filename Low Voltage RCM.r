@@ -1,4 +1,4 @@
-setwd("J:/Asset Management/Asset Performance and Investment/11_Analytics/R Working Dir/Low Voltage")
+
 
 library(sp)
 library(readxl)
